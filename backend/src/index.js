@@ -5,6 +5,10 @@ const morgan = require('morgan');
 const { validateEnv, config } = require('./config/env');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const healthRoutes = require('./routes/health');
+const eventRoutes = require('./routes/events');
+const demoRoutes = require('./routes/demo');
+const paymentsRoutes = require('./routes/payments');
+const recoveryCasesRoutes = require('./routes/recoveryCases');
 
 // Validate environment variables on startup
 validateEnv();
@@ -23,6 +27,10 @@ app.use(morgan('dev'));
 
 // --------------- Routes ---------------
 app.use('/api/health', healthRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/demo', demoRoutes);
+app.use('/api/payments', paymentsRoutes);
+app.use('/api/recovery-cases', recoveryCasesRoutes);
 
 // Root route
 app.get('/', (req, res) => {

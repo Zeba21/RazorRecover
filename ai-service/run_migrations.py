@@ -148,7 +148,7 @@ def run_migrations():
         expected_tables = {
             "customers", "payments", "subscriptions", "invoices", 
             "recovery_cases", "recovery_attempts", "ai_predictions", 
-            "ai_decisions", "audit_logs", "notifications"
+            "ai_decisions", "audit_logs", "notifications", "revenue_events"
         }
         
         missing_tables = expected_tables - set(tables)
@@ -156,7 +156,7 @@ def run_migrations():
             print(f"[ERROR] Missing expected tables: {missing_tables}", file=sys.stderr)
             return False
         else:
-            print("[SUCCESS] All 10 tables exist and schema was applied successfully.")
+            print("[SUCCESS] All 11 tables exist and schema was applied successfully.")
 
     except Exception as e:
         print(f"[ERROR] Exception during migration application: {str(e)}", file=sys.stderr)
