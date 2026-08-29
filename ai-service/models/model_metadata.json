@@ -1,0 +1,48 @@
+{
+  "model_version": "recovery-xgboost-v1.0",
+  "training_date": "2026-08-29T05:45:23.724628+00:00",
+  "feature_names": [
+    "transaction_amount",
+    "customer_payment_history",
+    "previous_success_rate",
+    "previous_failure_count",
+    "retry_count",
+    "customer_age_days",
+    "time_since_failure",
+    "invoice_age",
+    "previous_recovery_success",
+    "failure_type",
+    "subscription_status",
+    "payment_method",
+    "customer_segment"
+  ],
+  "training_samples": 8400,
+  "validation_samples": 1800,
+  "test_samples": 1800,
+  "metrics": {
+    "accuracy": 0.8172,
+    "precision": 0.8329,
+    "recall": 0.9677,
+    "f1": 0.8953,
+    "roc_auc": 0.7659
+  },
+  "confusion_matrix": [
+    [
+      65,
+      282
+    ],
+    [
+      47,
+      1406
+    ]
+  ],
+  "hyperparameters": {
+    "n_estimators": 150,
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+    "eval_metric": "logloss"
+  }
+}
