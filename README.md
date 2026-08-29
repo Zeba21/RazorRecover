@@ -70,7 +70,7 @@ npm run dev
 | `AI_SERVICE_URL`          | No       | AI service URL (default: http://localhost:8000) |
 | `GEMINI_API_KEY`          | No       | Google Gemini API key            |
 
-## Revenue Event Engine (Module 3)
+## Revenue Event Engine 
 
 The Revenue Event Engine ingests billing events, validates inputs, stores them, computes revenue-at-risk, manages recovery cases, and writes audit logs.
 
