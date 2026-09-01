@@ -11,6 +11,7 @@ const paymentsRoutes = require('./routes/payments');
 const recoveryCasesRoutes = require('./routes/recoveryCases');
 const predictRecoveryRoutes = require('./routes/predictRecovery');
 const explainRecoveryRoutes = require('./routes/explainRecovery');
+const recoveryAgentRoutes = require('./routes/recoveryAgent');
 
 // Validate environment variables on startup
 validateEnv();
@@ -35,6 +36,7 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/recovery-cases', recoveryCasesRoutes);
 app.use('/api/predict-recovery', predictRecoveryRoutes);
 app.use('/api/explain-recovery', explainRecoveryRoutes);
+app.use('/api/recovery-agent', recoveryAgentRoutes);
 
 
 // Root route

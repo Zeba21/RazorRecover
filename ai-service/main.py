@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import pandas as pd
-from typing import List
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from db import get_supabase_client, handle_db_error
@@ -235,6 +235,46 @@ async def explain_recovery(request: PredictRecoveryRequest):
         feature_importance=explanation_data["feature_importance"],
         human_explanation=explanation_data["human_explanation"],
     )
+
+
+# ----------------- Module 6: LangGraph Agent Endpoint -----------------
+
+class RunRecoveryAgentRequest(BaseModel):
+    recovery_case_id: str = Field(..., description="UUID of recovery case")
+    is_demo: bool = Field(True, description="Flag indicating simulated demo execution")
+    demo_simulate_success: bool = Field(True, description="Simulate payment retry success in demo mode")
+    initial_case: Optional[Dict[str, Any]] = None
+    initial_payment: Optional[Dict[str, Any]] = None
+    initial_customer: Optional[Dict[str, Any]] = None
+    retry_count: Optional[int] = None
+    reminder_count: Optional[int] = None
+
+
+class RunRecoveryAgentResponse(BaseModel):
+    success: bool
+    data: Dict[str, Any]
+
+
+@app.post("/run-recovery-agent", response_model=RunRecoveryAgentResponse)
+async def run_agent_endpoint(request: RunRecoveryAgentRequest):
+    """
+    Executes Module 6 LangGraph Revenue Recovery Agent workflow for a given case.
+    """
+    try:
+        from agent import run_recovery_agent
+        result = run_recovery_agent(
+            recovery_case_id=request.recovery_case_id,
+            is_demo=request.is_demo,
+            demo_simulate_success=request.demo_simulate_success,
+            initial_case=request.initial_case,
+            initial_payment=request.initial_payment,
+            initial_customer=request.initial_customer,
+            retry_count=request.retry_count,
+            reminder_count=request.reminder_count
+        )
+        return RunRecoveryAgentResponse(success=True, data=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent execution error: {str(e)}")
 
 
 # ----------------- Existing Endpoints (Module 0-3) -----------------
