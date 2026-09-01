@@ -148,7 +148,8 @@ def run_migrations():
         expected_tables = {
             "customers", "payments", "subscriptions", "invoices", 
             "recovery_cases", "recovery_attempts", "ai_predictions", 
-            "ai_decisions", "audit_logs", "notifications", "revenue_events"
+            "ai_decisions", "audit_logs", "notifications", "revenue_events",
+            "recovery_explanations"
         }
         
         missing_tables = expected_tables - set(tables)

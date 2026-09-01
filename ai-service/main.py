@@ -10,9 +10,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import pandas as pd
+from typing import List
 from pydantic import BaseModel, Field, field_validator
 
 from db import get_supabase_client, handle_db_error
+from explain_model import generate_shap_explanation
 
 app = FastAPI(
     title="RazorRecover AI Service",
@@ -161,6 +163,77 @@ async def predict_recovery(request: PredictRecoveryRequest):
         recovery_probability=round(proba, 4),
         risk_level=risk_level,
         model_version=model_version
+    )
+
+
+# ----------------- Module 5: SHAP Explainability Endpoints -----------------
+
+class FactorDetail(BaseModel):
+    feature: str
+    importance: str
+    explanation: str
+
+
+class FeatureImportanceItem(BaseModel):
+    feature: str
+    importance: str
+    impact: str
+
+
+class ExplainRecoveryResponse(BaseModel):
+    recovery_probability: float
+    risk_level: str
+    model_version: str
+    top_positive_factors: List[FactorDetail]
+    top_negative_factors: List[FactorDetail]
+    feature_importance: List[FeatureImportanceItem]
+    human_explanation: str
+
+
+@app.post("/explain-recovery", response_model=ExplainRecoveryResponse)
+async def explain_recovery(request: PredictRecoveryRequest):
+    """
+    Predicts recovery probability AND generates human-readable SHAP feature explanations
+    using the persisted Module 4 XGBoost model pipeline without retraining.
+    """
+    pipeline, model_version = get_model_pipeline()
+
+    input_df = pd.DataFrame([{
+        "transaction_amount": request.transaction_amount,
+        "customer_payment_history": request.customer_payment_history,
+        "previous_success_rate": request.previous_success_rate,
+        "previous_failure_count": request.previous_failure_count,
+        "failure_type": request.failure_type,
+        "retry_count": request.retry_count,
+        "customer_age_days": request.customer_age_days,
+        "subscription_status": request.subscription_status,
+        "time_since_failure": request.time_since_failure,
+        "payment_method": request.payment_method,
+        "customer_segment": request.customer_segment,
+        "invoice_age": request.invoice_age,
+        "previous_recovery_success": request.previous_recovery_success,
+    }])
+
+    try:
+        proba = float(pipeline.predict_proba(input_df)[0][1])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
+
+    risk_level = calculate_risk_level(proba)
+
+    try:
+        explanation_data = generate_shap_explanation(pipeline, input_df)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SHAP explanation error: {str(e)}")
+
+    return ExplainRecoveryResponse(
+        recovery_probability=round(proba, 4),
+        risk_level=risk_level,
+        model_version=model_version,
+        top_positive_factors=explanation_data["top_positive_factors"],
+        top_negative_factors=explanation_data["top_negative_factors"],
+        feature_importance=explanation_data["feature_importance"],
+        human_explanation=explanation_data["human_explanation"],
     )
 
 
