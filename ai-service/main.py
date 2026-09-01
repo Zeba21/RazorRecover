@@ -44,7 +44,7 @@ def get_model_pipeline():
     if _loaded_pipeline is None:
         if not MODEL_PATH.exists():
             raise HTTPException(
-                status_code=500,
+                status_code=503,
                 detail=f"Model artifact not found at {MODEL_PATH}. Please run train_model.py first."
             )
         _loaded_pipeline = joblib.load(MODEL_PATH)
