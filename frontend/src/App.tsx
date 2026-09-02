@@ -1,53 +1,67 @@
 import { useState, useEffect } from 'react';
-import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
-
-interface HealthData {
-  status: string;
-  version: string;
-  timestamp: string;
-  responseTime: string;
-  services: {
-    database: { status: string; error?: string };
-    aiService: { status: string; url: string; error?: string };
-  };
-  environment: string;
-}
+import DashboardPage from './pages/Dashboard';
+import RecoveryCaseDetailPage from './pages/RecoveryCaseDetail';
 
 function App() {
-  const [health, setHealth] = useState<HealthData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [route, setRoute] = useState<'dashboard' | 'cases' | string>('dashboard');
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
-  const fetchHealth = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/health');
-      const json = await res.json();
-      if (json.success) {
-        setHealth(json.data);
+  // Sync hash routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('/dashboard/cases/')) {
+        const id = hash.replace('/dashboard/cases/', '');
+        setSelectedCaseId(id);
+        setRoute('case_detail');
+      } else if (hash === '/dashboard/cases') {
+        setRoute('cases');
+        setSelectedCaseId(null);
       } else {
-        setError('Health check returned failure');
+        setRoute('dashboard');
+        setSelectedCaseId(null);
       }
-    } catch (err) {
-      setError('Could not reach backend — is it running on :5000?');
-    } finally {
-      setLoading(false);
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateTo = (newRoute: 'dashboard' | 'cases') => {
+    if (newRoute === 'cases') {
+      window.location.hash = '/dashboard/cases';
+      setRoute('cases');
+      setSelectedCaseId(null);
+    } else {
+      window.location.hash = '/dashboard';
+      setRoute('dashboard');
+      setSelectedCaseId(null);
     }
   };
 
-  useEffect(() => {
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 30000); // refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
+  const handleSelectCase = (caseId: string) => {
+    setSelectedCaseId(caseId);
+    setRoute('case_detail');
+    window.location.hash = `/dashboard/cases/${caseId}`;
+  };
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 p-6 lg:p-10 ml-20 lg:ml-64">
-        <Dashboard health={health} loading={loading} error={error} onRefresh={fetchHealth} />
+    <div className="flex min-h-screen bg-surface-950 text-surface-100 font-sans selection:bg-indigo-500/30">
+      {/* Sidebar Navigation */}
+      <Sidebar currentRoute={route} onNavigate={navigateTo} />
+
+      {/* Main Content Viewport */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-10 ml-20 lg:ml-64 max-w-7xl mx-auto w-full">
+        {route === 'case_detail' && selectedCaseId ? (
+          <RecoveryCaseDetailPage
+            caseId={selectedCaseId}
+            onBack={() => navigateTo('dashboard')}
+          />
+        ) : (
+          <DashboardPage onSelectCase={handleSelectCase} />
+        )}
       </main>
     </div>
   );

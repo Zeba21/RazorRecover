@@ -14,6 +14,7 @@ const explainRecoveryRoutes = require('./routes/explainRecovery');
 const recoveryAgentRoutes = require('./routes/recoveryAgent');
 const recoveryExecutionRoutes = require('./routes/recoveryExecution');
 const webhooksRoutes = require('./routes/webhooks');
+const dashboardRoutes = require('./routes/dashboard');
 
 // Validate environment variables on startup
 validateEnv();
@@ -41,6 +42,7 @@ app.use('/api/explain-recovery', explainRecoveryRoutes);
 app.use('/api/recovery-agent', recoveryAgentRoutes);
 app.use('/api/recovery', recoveryExecutionRoutes);
 app.use('/api/webhooks', webhooksRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 
 // Root route

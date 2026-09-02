@@ -17,9 +17,22 @@ RazorRecover is an AI-powered automated revenue recovery system for failed SaaS 
 | **Module 5** | Model Explainability (SHAP) | ✅ COMPLETE | SHAP Feature Attribution, Human Narratives, Fast In-memory Inference |
 | **Module 6** | LangGraph AI Recovery Agent | ✅ COMPLETE | 12-State LangGraph Workflow, Gemini LLM Diagnosis, Policy Guardrails |
 | **Module 7** | Payment Simulation & Provider Layer | ✅ COMPLETE | `PaymentProvider` Abstraction, `MockPaymentProvider`, Single-Source Node Payment Execution Service, Webhooks, Idempotency, Zero Credentials Required |
-| **Module 8** | Dashboard & UI Integration | ⏳ PENDING | Frontend Integration & Visual Demonstration (Not Started) |
+| **Module 8** | Dashboard & UI Integration | ✅ COMPLETE | Premium Fintech React + TS Dashboard, Live Supabase Metrics, Recharts Area Chart, Filterable Cases, Case Details, AI Activity Panel, Hero Demo Flow |
 
 ---
+
+## Module 8 Details — Winning Dashboard Integration
+
+- **Strict Zero-Hardcoding Rule**: All KPIs (Revenue at Risk, Revenue Recovered, Recovery Rate %, Active Cases), charts, cases, predictions, SHAP explainability, root causes, guardrail decisions, attempts, and activity events are calculated dynamically from Supabase database tables via backend APIs.
+- **Backend Aggregate APIs**:
+  - `GET /api/dashboard/summary`: Computes aggregate financial metrics and case counts.
+  - `GET /api/dashboard/revenue`: Computes time-series revenue at risk vs recovered.
+  - `GET /api/dashboard/cases`: Returns enriched cases with search and status/risk filters.
+  - `GET /api/recovery/:caseId/detail`: Serves full case details, payment metadata (stripping sensitive credentials), XGBoost probability, SHAP factors, guardrail decisions, attempts, and audit timeline.
+  - `GET /api/recovery/activity`: Live audit stream for AI agent activity panel.
+- **Dedicated Routing**: Dedicated case detail view at `/dashboard/cases/:caseId`.
+- **Run Recovery Demo Hero Button**: Executes the Module 7 recovery workflow end-to-end (event generation -> XGBoost prediction -> SHAP -> LLM diagnosis -> guardrail validation -> MockPaymentProvider execution -> DB updates), displaying live progress and auto-refreshing the dashboard upon completion.
+
 
 ## Module 7 Details — Payment Simulation & Provider Abstraction
 
