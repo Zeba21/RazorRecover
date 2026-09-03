@@ -1,6 +1,6 @@
 import React from 'react';
 import { Activity, Bot, ShieldCheck, Zap, AlertCircle, RefreshCw } from 'lucide-react';
-import { ActivityEvent } from '../../services/dashboardApi';
+import { ActivityEvent, renderSafeText } from '../../services/dashboardApi';
 
 interface AIActivityProps {
   events: ActivityEvent[];
@@ -97,7 +97,7 @@ export const AIActivity: React.FC<AIActivityProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] text-surface-200/70 mt-0.5 line-clamp-2 leading-relaxed">
-                  {item.description}
+                  {renderSafeText(item.description)}
                 </p>
               </div>
             </div>

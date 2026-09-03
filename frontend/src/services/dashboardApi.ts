@@ -56,6 +56,30 @@ export interface PaymentInfo {
   created_at: string;
 }
 
+/**
+ * Helper to safely format any primitive or object value for React child rendering.
+ * Prevents "Objects are not valid as a React child" errors.
+ */
+export function renderSafeText(val: any): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+    return String(val);
+  }
+  if (typeof val === 'object') {
+    if (typeof val.details === 'string') return val.details;
+    if (typeof val.message === 'string') return val.message;
+    if (typeof val.execution_status === 'string') return val.execution_status;
+    if (typeof val.status === 'string') return val.status;
+    if (typeof val.reason === 'string') return val.reason;
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return String(val);
+}
+
 export interface CustomerInfo {
   id: string;
   name: string;
@@ -419,4 +443,45 @@ export async function fetchModelEvaluation(): Promise<ModelEvaluationData> {
   }
   return json.data;
 }
+
+/**
+ * Execute recovery action for a case (Module 9 UI Safety Verification).
+ */
+export async function executeRecoveryAction(
+  caseId: string, 
+  options: { action?: string; simulate_success?: boolean; idempotency_key?: string } = {}
+) {
+  const res = await fetch(`/api/recovery/${caseId}/execute`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(options)
+  });
+
+  if (!res.ok) {
+    const errorJson = await res.json().catch(() => ({}));
+    throw new Error(errorJson.error?.message || `Recovery execution failed (${res.status})`);
+  }
+
+  const json = await res.json();
+  return json.data;
+}
+
+/**
+ * Create a demo High-Value payment failure case (e.g. ₹60,000) for safety verification.
+ */
+export async function createDemoHighValueCase(amount: number = 60000) {
+  const res = await fetch('/api/demo/payment-failure', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount })
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to generate high-value demo failure (${res.status})`);
+  }
+
+  const json = await res.json();
+  return json.data;
+}
+
 

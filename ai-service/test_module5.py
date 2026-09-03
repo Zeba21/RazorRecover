@@ -112,11 +112,31 @@ def test_9_factors_ranked_by_contribution():
     pipeline = joblib.load(MODEL_PATH)
     sample_df = pd.DataFrame([SAMPLE_PAYLOAD])
     exp = generate_shap_explanation(pipeline, sample_df)
-    # Verify importance level assignments match contribution ranking
     pos = exp["top_positive_factors"]
     if len(pos) >= 2:
         valid_ranks = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
         assert valid_ranks[pos[0]["importance"]] >= valid_ranks[pos[1]["importance"]]
+
+
+def test_shap_sign_classification_and_no_overlap():
+    pipeline = joblib.load(MODEL_PATH)
+    sample_df = pd.DataFrame([SAMPLE_PAYLOAD])
+    exp = generate_shap_explanation(pipeline, sample_df)
+
+    pos_features = set(f["feature"] for f in exp["top_positive_factors"])
+    neg_features = set(f["feature"] for f in exp["top_negative_factors"])
+
+    # Rule 2: No feature must appear in both positive and negative lists
+    overlap = pos_features.intersection(neg_features)
+    assert len(overlap) == 0, f"Features appeared in both lists: {overlap}"
+
+    # Rule 6: Human explanation agrees with factor lists
+    narrative = exp["human_explanation"]
+    assert isinstance(narrative, str)
+    if exp["top_positive_factors"]:
+        assert "Positive drivers" in narrative
+    if exp["top_negative_factors"]:
+        assert "Risk factors" in narrative
 
 
 def test_10_human_readable_feature_names():

@@ -305,7 +305,10 @@ router.get('/activity', async (req, res, next) => {
         case 'payment_retry_requested':
         case 'agent_state_execute_action':
           title = `Recovery Execution: ${log.details?.action || log.details?.final_action || 'Action'}`;
-          description = log.details?.details || log.details?.reason || 'Execution dispatched via MockPaymentProvider.';
+          const rawDet = log.details?.details;
+          description = (typeof rawDet === 'object' && rawDet !== null)
+            ? (rawDet.details || rawDet.execution_status || JSON.stringify(rawDet))
+            : (rawDet || log.details?.reason || 'Execution dispatched via MockPaymentProvider.');
           break;
         case 'payment_success':
         case 'revenue_recovered':

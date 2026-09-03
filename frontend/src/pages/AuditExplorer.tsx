@@ -11,7 +11,17 @@ export const AuditExplorer: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Filters & Pagination
-  const [search, setSearch] = useState<string>('');
+  const getInitialSearch = () => {
+    const hash = window.location.hash;
+    if (hash.includes('?')) {
+      const queryStr = hash.split('?')[1];
+      const params = new URLSearchParams(queryStr);
+      return params.get('search') || '';
+    }
+    return '';
+  };
+
+  const [search, setSearch] = useState<string>(getInitialSearch());
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [guardrailFilter, setGuardrailFilter] = useState<string>('all');
   const [page, setPage] = useState<number>(1);

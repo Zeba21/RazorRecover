@@ -5,6 +5,7 @@ import SHAPFactors from '../components/recovery/SHAPFactors';
 import GuardrailDecision from '../components/recovery/GuardrailDecision';
 import RecoveryAttempts from '../components/recovery/RecoveryAttempts';
 import AuditTimeline from '../components/recovery/AuditTimeline';
+import SafetyVerificationPanel from '../components/recovery/SafetyVerificationPanel';
 import { fetchCaseDetail, RecoveryCaseDetail } from '../services/dashboardApi';
 
 interface RecoveryCaseDetailProps {
@@ -213,6 +214,14 @@ export const RecoveryCaseDetailPage: React.FC<RecoveryCaseDetailProps> = ({ case
           </div>
         </div>
       </div>
+
+      {/* CONTROLLED SAFETY ACTIONS PANEL (MODULE 9 UI) */}
+      <SafetyVerificationPanel
+        caseId={caseId}
+        currentAmount={payment.amount}
+        currentStatus={detail.status}
+        onRefresh={loadDetail}
+      />
 
       {/* RECOVERY ATTEMPTS TABLE */}
       <div>

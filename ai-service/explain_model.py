@@ -122,13 +122,16 @@ def generate_shap_explanation(pipeline, input_df: pd.DataFrame) -> dict:
     explainer = shap.TreeExplainer(xgb_classifier)
     raw_shap_values = explainer.shap_values(X_trans)
 
-    # Extract 1D array of SHAP values for single input sample
+    # Extract 1D array of SHAP values for single input sample (Rule 3)
     if isinstance(raw_shap_values, list):
         shap_array = raw_shap_values[1][0] if len(raw_shap_values) > 1 else raw_shap_values[0][0]
-    elif len(np.shape(raw_shap_values)) == 2:
-        shap_array = raw_shap_values[0]
-    elif len(np.shape(raw_shap_values)) == 3:
-        shap_array = raw_shap_values[0][:, 1]
+    elif isinstance(raw_shap_values, np.ndarray):
+        if raw_shap_values.ndim == 3:
+            shap_array = raw_shap_values[0, :, 1]
+        elif raw_shap_values.ndim == 2:
+            shap_array = raw_shap_values[0]
+        else:
+            shap_array = np.ravel(raw_shap_values)
     else:
         shap_array = np.ravel(raw_shap_values)
 
@@ -146,7 +149,7 @@ def generate_shap_explanation(pipeline, input_df: pd.DataFrame) -> dict:
 
         feature_shap_map[base_feature] = feature_shap_map.get(base_feature, 0.0) + float(val)
 
-    # Separate into positive & negative factors
+    # Separate into positive & negative factors (Rules 2 & 5)
     pos_factors = []
     neg_factors = []
     all_importances = []
@@ -154,6 +157,11 @@ def generate_shap_explanation(pipeline, input_df: pd.DataFrame) -> dict:
     for feat, shap_val in feature_shap_map.items():
         abs_val = abs(shap_val)
         imp_level = get_importance_level(abs_val)
+
+        # Rule 5: Zero SHAP contribution is neither positive nor negative
+        if abs_val < 1e-9:
+            continue
+
         is_pos = shap_val > 0
         feat_display = FEATURE_DISPLAY_NAMES.get(feat, feat)
         feat_val = row_dict.get(feat, '')
@@ -179,9 +187,11 @@ def generate_shap_explanation(pipeline, input_df: pd.DataFrame) -> dict:
         elif shap_val < 0:
             neg_factors.append(item)
 
-    # Rank factors by absolute SHAP contribution descending
-    pos_factors.sort(key=lambda x: x["abs_shap"], reverse=True)
-    neg_factors.sort(key=lambda x: x["abs_shap"], reverse=True)
+    # Rank positive factors by descending SHAP value (largest positive driver first)
+    pos_factors.sort(key=lambda x: x["shap_value"], reverse=True)
+
+    # Rank negative factors by ascending SHAP value (most negative risk factor first)
+    neg_factors.sort(key=lambda x: x["shap_value"])
 
     # Pick top 3 positive and top 3 negative
     top_pos = [
@@ -200,27 +210,18 @@ def generate_shap_explanation(pipeline, input_df: pd.DataFrame) -> dict:
         } for f in neg_factors[:3]
     ]
 
-    # Generate human-readable narrative summary from actual top factors
+    # Generate human-readable narrative summary agreeing strictly with SHAP signs (Rule 6)
     summary_parts = []
 
-    if pos_factors and (not neg_factors or pos_factors[0]["abs_shap"] >= neg_factors[0]["abs_shap"]):
-        top_p1 = pos_factors[0]
-        summary_parts.append(top_p1["explanation"])
-        if len(pos_factors) > 1:
-            summary_parts.append(f"Additionally, {pos_factors[1]['explanation'].lower()}")
-        if neg_factors:
-            summary_parts.append(f"however, {neg_factors[0]['explanation'].lower()}")
-    elif neg_factors:
-        top_n1 = neg_factors[0]
-        summary_parts.append(top_n1["explanation"])
-        if len(neg_factors) > 1:
-            summary_parts.append(f"Furthermore, {neg_factors[1]['explanation'].lower()}")
-        if pos_factors:
-            summary_parts.append(f"despite {pos_factors[0]['explanation'].lower()}")
+    if pos_factors:
+        top_pos_expls = [f["explanation"] for f in pos_factors[:2]]
+        summary_parts.append(f"Positive drivers increasing recovery probability: {'; '.join(top_pos_expls)}.")
 
-    human_explanation = ". ".join([s.strip().capitalize() for s in summary_parts])
-    if not human_explanation.endswith('.'):
-        human_explanation += '.'
+    if neg_factors:
+        top_neg_expls = [f["explanation"] for f in neg_factors[:2]]
+        summary_parts.append(f"Risk factors reducing recovery probability: {'; '.join(top_neg_expls)}.")
+
+    human_explanation = " ".join(summary_parts) if summary_parts else "All feature contributions evaluated neutral for this payment recovery case."
 
     return {
         "top_positive_factors": top_pos,

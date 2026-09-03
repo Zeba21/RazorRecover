@@ -1,6 +1,6 @@
 import React from 'react';
 import { GitCommit, CheckCircle, AlertTriangle, Play, Zap } from 'lucide-react';
-import { TimelineEvent } from '../../services/dashboardApi';
+import { TimelineEvent, renderSafeText } from '../../services/dashboardApi';
 
 interface AuditTimelineProps {
   timeline: TimelineEvent[];
@@ -55,7 +55,7 @@ export const AuditTimeline: React.FC<AuditTimelineProps> = ({ timeline }) => {
                 </div>
                 {item.details && (
                   <p className="text-[11px] text-surface-200/70 leading-relaxed font-mono">
-                    {typeof item.details === 'object' ? JSON.stringify(item.details) : String(item.details)}
+                    {renderSafeText(item.details)}
                   </p>
                 )}
               </div>
