@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { SHAPInfo } from '../../services/dashboardApi';
+import { formatFeatureName, stripModuleText } from '../../utils/formatters';
 
 interface SHAPFactorsProps {
   shapInfo: SHAPInfo;
@@ -16,14 +17,14 @@ export const SHAPFactors: React.FC<SHAPFactorsProps> = ({ shapInfo }) => {
           <h3 className="text-base font-bold text-surface-100">SHAP Model Explainability</h3>
         </div>
         <span className="text-[11px] text-surface-200/40 uppercase font-mono font-semibold">
-          Module 5 SHAP Attribution
+          {stripModuleText('Module 5 SHAP Attribution')}
         </span>
       </div>
 
       {/* Human Narrative */}
       <div className="p-3.5 mb-5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200 flex items-start gap-2.5">
         <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-        <p className="leading-relaxed font-medium">{shapInfo.human_explanation}</p>
+        <p className="leading-relaxed font-medium">{stripModuleText(shapInfo.human_explanation)}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -43,10 +44,10 @@ export const SHAPFactors: React.FC<SHAPFactorsProps> = ({ shapInfo }) => {
                   className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-surface-100 font-mono text-[11px]">{item.feature}</span>
+                    <span className="font-bold text-surface-100 font-mono text-[11px]">{formatFeatureName(item.feature)}</span>
                     <span className="font-extrabold text-emerald-400 font-mono">{item.importance}</span>
                   </div>
-                  <p className="text-[11px] text-surface-200/70 mt-1">{item.explanation}</p>
+                  <p className="text-[11px] text-surface-200/70 mt-1">{stripModuleText(item.explanation)}</p>
                 </div>
               ))
             )}
@@ -69,10 +70,10 @@ export const SHAPFactors: React.FC<SHAPFactorsProps> = ({ shapInfo }) => {
                   className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-surface-100 font-mono text-[11px]">{item.feature}</span>
+                    <span className="font-bold text-surface-100 font-mono text-[11px]">{formatFeatureName(item.feature)}</span>
                     <span className="font-extrabold text-rose-400 font-mono">{item.importance}</span>
                   </div>
-                  <p className="text-[11px] text-surface-200/70 mt-1">{item.explanation}</p>
+                  <p className="text-[11px] text-surface-200/70 mt-1">{stripModuleText(item.explanation)}</p>
                 </div>
               ))
             )}

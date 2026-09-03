@@ -4,6 +4,7 @@ import {
   HelpCircle, Layers, Sliders, Info
 } from 'lucide-react';
 import { fetchModelEvaluation, ModelEvaluationData } from '../services/dashboardApi';
+import { stripModuleText } from '../utils/formatters';
 
 export const ModelEvaluation: React.FC = () => {
   const [data, setData] = useState<ModelEvaluationData | null>(null);
@@ -133,7 +134,7 @@ export const ModelEvaluation: React.FC = () => {
             "{disclaimer}"
           </p>
           <p className="text-[11px] text-purple-300/70">
-            These technical statistical metrics represent the offline validation performance of the Module 4 XGBoost binary classification model.
+            {stripModuleText('These technical statistical metrics represent the offline validation performance of the Module 4 XGBoost binary classification model.')}
           </p>
         </div>
       </div>

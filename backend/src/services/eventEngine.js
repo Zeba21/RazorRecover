@@ -155,7 +155,9 @@ async function processEvent(eventData, options = {}) {
   const targetStatus = mapEventToPaymentStatus(event_type);
 
   // Search existing payments
-  let paymentQuery = supabase.from('payments').select('id, status, is_demo');
+  let paymentQuery = supabase
+    .from('payments')
+    .select('id, status, is_demo, error_code, error_description, error_reason, error_source, error_step, method');
   if (isUuid(payment_reference)) {
     paymentQuery = paymentQuery.eq('id', payment_reference);
   } else {
@@ -173,29 +175,73 @@ async function processEvent(eventData, options = {}) {
 
   if (existingPayment) {
     paymentId = existingPayment.id;
-    // Update status if it differs
+    
+    const updatePayData = { updated_at: new Date().toISOString() };
+    let needsUpdate = false;
+
     if (existingPayment.status !== targetStatus) {
+      updatePayData.status = targetStatus;
+      needsUpdate = true;
+    }
+    if (metadata.error_code && metadata.error_code !== existingPayment.error_code) {
+      updatePayData.error_code = metadata.error_code;
+      needsUpdate = true;
+    }
+    if (metadata.error_description && metadata.error_description !== existingPayment.error_description) {
+      updatePayData.error_description = metadata.error_description;
+      needsUpdate = true;
+    }
+    if (metadata.error_reason && metadata.error_reason !== existingPayment.error_reason) {
+      updatePayData.error_reason = metadata.error_reason;
+      needsUpdate = true;
+    }
+    if (metadata.error_source && metadata.error_source !== existingPayment.error_source) {
+      updatePayData.error_source = metadata.error_source;
+      needsUpdate = true;
+    }
+    if (metadata.error_step && metadata.error_step !== existingPayment.error_step) {
+      updatePayData.error_step = metadata.error_step;
+      needsUpdate = true;
+    }
+    const payMethod = metadata.method || metadata.payment_method;
+    if (payMethod && payMethod !== existingPayment.method) {
+      updatePayData.method = payMethod;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
       const { error: updatePayError } = await supabase
         .from('payments')
-        .update({ 
-          status: targetStatus, 
-          updated_at: new Date().toISOString() 
-        })
+        .update(updatePayData)
         .eq('id', paymentId);
 
       if (updatePayError) {
-        const err = new Error(`Failed to update payment status: ${updatePayError.message}`);
+        const err = new Error(`Failed to update payment record: ${updatePayError.message}`);
         err.statusCode = 500;
         throw err;
       }
     }
   } else {
-    // Insert new minimum valid payment record
+    // Insert new payment record mapping all failure metadata
+    const validMethods = ['card', 'upi', 'netbanking', 'wallet', 'unknown'];
+    const rawMethod = metadata.method || metadata.payment_method || 'card';
+    const cleanMethod = validMethods.includes(rawMethod) ? rawMethod : 'card';
+
+    const validSources = ['customer', 'business', 'gateway', 'razorpay', 'system'];
+    const rawSource = metadata.error_source;
+    const cleanSource = validSources.includes(rawSource) ? rawSource : null;
+
     const newPaymentData = {
       customer_id,
       amount,
       status: targetStatus,
       currency: metadata.currency || 'INR',
+      method: cleanMethod,
+      error_code: metadata.error_code || null,
+      error_description: metadata.error_description || null,
+      error_reason: metadata.error_reason || null,
+      error_source: cleanSource,
+      error_step: metadata.error_step || null,
       is_demo: isDemo,
       created_at: timestamp,
       updated_at: new Date().toISOString()

@@ -1,5 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, CreditCard, Shield, FileText, BarChart3, Brain } from 'lucide-react';
+import { stripModuleText } from '../utils/formatters';
 
 export type RouteType = 'dashboard' | 'cases' | 'audit' | 'analytics' | 'model-evaluation' | string;
 
@@ -53,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentRoute, onNavigate }) =>
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/5 hidden lg:block">
-        <p className="text-[10px] text-surface-200/30 text-center font-mono">Module 9 — Safety, Audit & Evaluation</p>
+        <p className="text-[10px] text-surface-200/30 text-center font-mono">{stripModuleText('Module 9 — Safety, Audit & Evaluation')}</p>
       </div>
     </aside>
   );

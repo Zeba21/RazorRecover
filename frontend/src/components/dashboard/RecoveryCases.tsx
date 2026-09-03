@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Filter, ChevronRight, AlertCircle, RefreshCw, ShieldAlert, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { RecoveryCase } from '../../services/dashboardApi';
+import { stripModuleText } from '../../utils/formatters';
 
 interface RecoveryCasesProps {
   cases: RecoveryCase[];
@@ -122,7 +123,7 @@ export const RecoveryCases: React.FC<RecoveryCasesProps> = ({
             </span>
           </h2>
           <p className="text-xs text-surface-200/50 mt-1">
-            Real recovery cases analyzed by Module 4 XGBoost & Module 6 LangGraph
+            {stripModuleText('Real recovery cases analyzed by Module 4 XGBoost & Module 6 LangGraph')}
           </p>
         </div>
 

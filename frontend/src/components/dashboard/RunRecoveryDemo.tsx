@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, CheckCircle2, AlertCircle, Loader2, Sparkles, X, ArrowRight } from 'lucide-react';
 import { runRecoveryDemo, DemoStepUpdate } from '../../services/dashboardApi';
+import { stripModuleText } from '../../utils/formatters';
 
 interface RunRecoveryDemoProps {
   onSuccess?: (recoveredAmount: number, caseId: string) => void;
@@ -95,7 +96,7 @@ export const RunRecoveryDemo: React.FC<RunRecoveryDemoProps> = ({ onSuccess }) =
               </div>
               <div>
                 <h3 className="text-lg font-extrabold text-surface-100">Live AI Recovery Workflow</h3>
-                <p className="text-xs text-surface-200/50">Module 7 automated payment recovery simulation</p>
+                <p className="text-xs text-surface-200/50">{stripModuleText('Module 7 automated payment recovery simulation')}</p>
               </div>
             </div>
 

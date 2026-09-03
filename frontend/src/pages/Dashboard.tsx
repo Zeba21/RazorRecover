@@ -5,6 +5,7 @@ import RevenueChart from '../components/dashboard/RevenueChart';
 import RecoveryCases from '../components/dashboard/RecoveryCases';
 import AIActivity from '../components/dashboard/AIActivity';
 import RunRecoveryDemo from '../components/dashboard/RunRecoveryDemo';
+import { stripModuleText } from '../utils/formatters';
 import {
   fetchDashboardSummary,
   fetchRevenueChart,
@@ -94,7 +95,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onSelectCase }) =>
               RazorRecover <span className="gradient-text">Dashboard</span>
             </h1>
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
-              Module 8 Active
+              {stripModuleText('Module 8 Active')}
             </span>
           </div>
           <p className="text-xs lg:text-sm text-surface-200/50 mt-1 max-w-xl">

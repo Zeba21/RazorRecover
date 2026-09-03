@@ -213,7 +213,7 @@ def receive_case_node(state: RecoveryAgentState) -> RecoveryAgentState:
 
 def analyze_case_node(state: RecoveryAgentState) -> RecoveryAgentState:
     """State 2: ANALYZE_CASE — Extract features dataframe for prediction & SHAP."""
-    pmt = state.get("payment", {})
+    pmt = dict(state.get("payment", {}))
     cust = state.get("customer", {})
     case = state.get("recovery_case", {})
 
@@ -223,10 +223,20 @@ def analyze_case_node(state: RecoveryAgentState) -> RecoveryAgentState:
     prev_success_rate = float(cust.get("previous_success_rate", 0.85))
     prev_failures = int(cust.get("previous_failure_count", 1))
     
-    fail_type = pmt.get("error_reason") or pmt.get("failure_type") or "insufficient_funds"
+    raw_fail_reason = pmt.get("error_reason") or pmt.get("failure_type") or pmt.get("error_code")
     valid_fail_types = {'insufficient_funds', 'authentication_failed', 'gateway_timeout', 'card_expired', 'network_error'}
-    if fail_type not in valid_fail_types:
-        fail_type = "insufficient_funds"
+    
+    if raw_fail_reason and str(raw_fail_reason).lower() in valid_fail_types:
+        provider_fail_reason = str(raw_fail_reason).lower()
+        model_fail_type = provider_fail_reason
+    else:
+        # Preserve actual failure reason or UNKNOWN (NEVER convert UNKNOWN to insufficient_funds)
+        provider_fail_reason = str(raw_fail_reason) if raw_fail_reason else "UNKNOWN"
+        model_fail_type = "network_error"
+
+    # Ensure payment object retains actual failure reason for diagnosis & UI
+    if not pmt.get("error_reason"):
+        pmt["error_reason"] = provider_fail_reason
 
     retry_count = state.get("retry_count", 0)
     cust_age = int(cust.get("customer_age_days", 300))
@@ -254,7 +264,7 @@ def analyze_case_node(state: RecoveryAgentState) -> RecoveryAgentState:
         "customer_payment_history": pmt_history,
         "previous_success_rate": prev_success_rate,
         "previous_failure_count": prev_failures,
-        "failure_type": fail_type,
+        "failure_type": model_fail_type,
         "retry_count": retry_count,
         "customer_age_days": cust_age,
         "subscription_status": sub_status,
@@ -266,10 +276,11 @@ def analyze_case_node(state: RecoveryAgentState) -> RecoveryAgentState:
     }])
 
     new_state = dict(state)
+    new_state["payment"] = pmt
     new_state["features_df"] = features_df
     new_state["previous_state"] = "RECEIVE_CASE"
     new_state["current_state"] = "ANALYZE_CASE"
-    new_state["audit_logs"] = log_state_transition(new_state, "RECEIVE_CASE", "ANALYZE_CASE", {"failure_type": fail_type})
+    new_state["audit_logs"] = log_state_transition(new_state, "RECEIVE_CASE", "ANALYZE_CASE", {"failure_type": provider_fail_reason})
     return new_state
 
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShieldCheck, ShieldAlert, ShieldX, UserCheck } from 'lucide-react';
 import { GuardrailInfo } from '../../services/dashboardApi';
+import { stripModuleText } from '../../utils/formatters';
 
 interface GuardrailDecisionProps {
   guardrail: GuardrailInfo;
@@ -52,7 +53,7 @@ export const GuardrailDecision: React.FC<GuardrailDecisionProps> = ({ guardrail 
           <Icon className="w-5 h-5 text-indigo-400" />
           <h3 className="text-base font-bold text-surface-100">Deterministic Safety Guardrail</h3>
         </div>
-        <span className="text-[10px] font-mono text-surface-200/40 uppercase">Module 6 Policy Engine</span>
+        <span className="text-[10px] font-mono text-surface-200/40 uppercase">{stripModuleText('Module 6 Policy Engine')}</span>
       </div>
 
       <div className="space-y-3">

@@ -4,6 +4,7 @@ import {
   ExternalLink, CheckCircle2, RefreshCw, Lock
 } from 'lucide-react';
 import { executeRecoveryAction, createDemoHighValueCase, renderSafeText } from '../../services/dashboardApi';
+import { stripModuleText } from '../../utils/formatters';
 
 interface SafetyVerificationPanelProps {
   caseId: string;
@@ -192,7 +193,7 @@ export const SafetyVerificationPanel: React.FC<SafetyVerificationPanelProps> = (
             <ShieldCheck className="w-5 h-5 text-indigo-400" />
             <h3 className="text-base font-bold text-white tracking-tight">Demo / Safety Verification Controls</h3>
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Module 9 Hardening
+              {stripModuleText('Module 9 Hardening')}
             </span>
           </div>
           <p className="text-xs text-surface-200/60 mt-1">
