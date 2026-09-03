@@ -1,12 +1,15 @@
-/**
- * RazorRecover — Module 7 & 8 Recovery Execution, Retry & Detail API Routes
- */
-
 const express = require('express');
 const paymentService = require('../services/paymentService');
 const { supabase } = require('../config/supabase');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
+
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const executionRateLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 20, message: 'Execution rate limit exceeded. Please wait a moment.' });
+
+router.use('/:caseId/execute', executionRateLimiter);
+router.use('/:caseId/retry', executionRateLimiter);
 
 /**
  * POST /api/recovery/:caseId/execute
@@ -15,6 +18,12 @@ const router = express.Router();
 router.post('/:caseId/execute', async (req, res, next) => {
   try {
     const { caseId } = req.params;
+    if (!UUID_REGEX.test(caseId)) {
+      const err = new Error(`Invalid caseId '${caseId}'. Must be a valid UUID.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
     const {
       action = 'RETRY_PAYMENT',
       simulate_success = true,
@@ -45,6 +54,12 @@ router.post('/:caseId/execute', async (req, res, next) => {
 router.post('/:caseId/retry', async (req, res, next) => {
   try {
     const { caseId } = req.params;
+    if (!UUID_REGEX.test(caseId)) {
+      const err = new Error(`Invalid caseId '${caseId}'. Must be a valid UUID.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
     const {
       simulate_success = true,
       simulate_status,
@@ -74,6 +89,11 @@ router.post('/:caseId/retry', async (req, res, next) => {
 router.get('/:caseId/status', async (req, res, next) => {
   try {
     const { caseId } = req.params;
+    if (!UUID_REGEX.test(caseId)) {
+      const err = new Error(`Invalid caseId '${caseId}'. Must be a valid UUID.`);
+      err.statusCode = 400;
+      throw err;
+    }
     const result = await paymentService.getCaseStatus(caseId);
     return res.status(200).json(result);
   } catch (error) {
@@ -88,6 +108,11 @@ router.get('/:caseId/status', async (req, res, next) => {
 router.get('/:caseId/detail', async (req, res, next) => {
   try {
     const { caseId } = req.params;
+    if (!UUID_REGEX.test(caseId)) {
+      const err = new Error(`Invalid caseId '${caseId}'. Must be a valid UUID.`);
+      err.statusCode = 400;
+      throw err;
+    }
 
     // 1. Fetch Recovery Case + joined Payment + Customer
     const { data: cases, error: caseErr } = await supabase
@@ -274,6 +299,96 @@ router.get('/:caseId/detail', async (req, res, next) => {
         })),
         audit_timeline: timeline
       }
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+/**
+ * GET /api/recovery/activity
+ * Returns recent AI agent activity log events from audit_logs table for Dashboard feed.
+ */
+router.get('/activity', async (req, res, next) => {
+  try {
+    const { data: logs, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (error) {
+      const err = new Error(`Database error fetching activity logs: ${error.message}`);
+      err.statusCode = 500;
+      throw err;
+    }
+
+    const activityEvents = (logs || []).map(log => {
+      let title = 'AI Agent Activity';
+      let description = '';
+
+      switch (log.event_type) {
+        case 'payment_failed':
+          title = 'Payment Failure Detected';
+          description = `Payment of ₹${log.details?.amount ? Number(log.details.amount).toLocaleString() : '0'} failed (${log.details?.error_reason || 'Decline'}).`;
+          break;
+        case 'recovery_initiated':
+        case 'agent_state_receive_case':
+          title = 'AI Recovery Case Initiated';
+          description = `Agent started processing recovery case for ₹${log.details?.tx_amount ? Number(log.details.tx_amount).toLocaleString() : 'payment'}.`;
+          break;
+        case 'agent_state_get_ml_prediction':
+          title = `Risk Model Prediction: ${log.details?.probability ? (Number(log.details.probability) * 100).toFixed(2) + '%' : 'Calculated'}`;
+          description = `Risk level classified as ${log.details?.risk_level || 'evaluated'} (${log.details?.model_version || 'XGBoost'}).`;
+          break;
+        case 'agent_state_get_shap_explanation':
+          title = 'SHAP Feature Explanation Generated';
+          description = log.details?.human_explanation || 'Identified top positive and negative recovery factors.';
+          break;
+        case 'agent_state_diagnose_root_cause':
+          title = 'Root Cause Identified';
+          description = log.details?.root_cause || 'AI diagnosed underlying payment failure reason.';
+          break;
+        case 'agent_state_select_intervention':
+          title = `Intervention Selected: ${log.details?.recommended_action || 'Strategy Chosen'}`;
+          description = log.details?.reason || 'AI selected optimal recovery strategy.';
+          break;
+        case 'agent_state_apply_guardrails':
+        case 'guardrail_evaluated':
+          title = `Guardrail: ${log.details?.decision || log.details?.guardrail_status || 'Evaluated'}`;
+          description = log.details?.reason || 'Deterministic safety checks executed.';
+          break;
+        case 'payment_retry_requested':
+        case 'agent_state_execute_action':
+          title = `Recovery Execution: ${log.details?.action || log.details?.final_action || 'Action'}`;
+          description = log.details?.details || log.details?.reason || 'Execution dispatched via MockPaymentProvider.';
+          break;
+        case 'payment_success':
+        case 'revenue_recovered':
+          title = 'Payment Recovered Successfully';
+          description = `Recovered ₹${log.details?.recovered_amount || log.details?.amount ? Number(log.details.recovered_amount || log.details.amount).toLocaleString() : 'revenue'}.`;
+          break;
+        default:
+          title = log.event_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          description = typeof log.details === 'object' ? JSON.stringify(log.details) : String(log.details || '');
+          break;
+      }
+
+      return {
+        id: log.id,
+        event_type: log.event_type,
+        title,
+        description,
+        actor: log.actor || 'ai_agent',
+        severity: log.severity || 'info',
+        entity_id: log.entity_id,
+        timestamp: log.created_at
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: activityEvents
     });
   } catch (error) {
     return next(error);

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar, { RouteType } from './components/Sidebar';
 import DashboardPage from './pages/Dashboard';
 import RecoveryCaseDetailPage from './pages/RecoveryCaseDetail';
+import AuditExplorer from './pages/AuditExplorer';
+import RecoveryAnalytics from './pages/RecoveryAnalytics';
+import ModelEvaluation from './pages/ModelEvaluation';
 
 function App() {
-  const [route, setRoute] = useState<'dashboard' | 'cases' | string>('dashboard');
+  const [route, setRoute] = useState<RouteType>('dashboard');
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   // Sync hash routing
@@ -18,6 +21,15 @@ function App() {
       } else if (hash === '/dashboard/cases') {
         setRoute('cases');
         setSelectedCaseId(null);
+      } else if (hash === '/dashboard/audit') {
+        setRoute('audit');
+        setSelectedCaseId(null);
+      } else if (hash === '/dashboard/analytics') {
+        setRoute('analytics');
+        setSelectedCaseId(null);
+      } else if (hash === '/dashboard/model-evaluation') {
+        setRoute('model-evaluation');
+        setSelectedCaseId(null);
       } else {
         setRoute('dashboard');
         setSelectedCaseId(null);
@@ -29,10 +41,22 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const navigateTo = (newRoute: 'dashboard' | 'cases') => {
+  const navigateTo = (newRoute: RouteType) => {
     if (newRoute === 'cases') {
       window.location.hash = '/dashboard/cases';
       setRoute('cases');
+      setSelectedCaseId(null);
+    } else if (newRoute === 'audit') {
+      window.location.hash = '/dashboard/audit';
+      setRoute('audit');
+      setSelectedCaseId(null);
+    } else if (newRoute === 'analytics') {
+      window.location.hash = '/dashboard/analytics';
+      setRoute('analytics');
+      setSelectedCaseId(null);
+    } else if (newRoute === 'model-evaluation') {
+      window.location.hash = '/dashboard/model-evaluation';
+      setRoute('model-evaluation');
       setSelectedCaseId(null);
     } else {
       window.location.hash = '/dashboard';
@@ -59,6 +83,12 @@ function App() {
             caseId={selectedCaseId}
             onBack={() => navigateTo('dashboard')}
           />
+        ) : route === 'audit' ? (
+          <AuditExplorer />
+        ) : route === 'analytics' ? (
+          <RecoveryAnalytics />
+        ) : route === 'model-evaluation' ? (
+          <ModelEvaluation />
         ) : (
           <DashboardPage onSelectCase={handleSelectCase} />
         )}

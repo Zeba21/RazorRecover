@@ -18,6 +18,45 @@ RazorRecover is an AI-powered automated revenue recovery system for failed SaaS 
 | **Module 6** | LangGraph AI Recovery Agent | ✅ COMPLETE | 12-State LangGraph Workflow, Gemini LLM Diagnosis, Policy Guardrails |
 | **Module 7** | Payment Simulation & Provider Layer | ✅ COMPLETE | `PaymentProvider` Abstraction, `MockPaymentProvider`, Single-Source Node Payment Execution Service, Webhooks, Idempotency, Zero Credentials Required |
 | **Module 8** | Dashboard & UI Integration | ✅ COMPLETE | Premium Fintech React + TS Dashboard, Live Supabase Metrics, Recharts Area Chart, Filterable Cases, Case Details, AI Activity Panel, Hero Demo Flow |
+| **Module 9** | Safety, Audit & Evaluation | ✅ COMPLETE | Complete Audit Trail, Guardrail Logging, Rate Limiting, Input Validation, Audit Explorer Page, Recovery Analytics Page, Model Evaluation Page, 16-Test Security & Functional Test Suite |
+
+---
+
+## Module 9 Details — Safety, Audit & Evaluation
+
+- **Safety Hardening & Database Migration**:
+  - `007_module9_safety_constraints.sql` applied non-negative check constraints on payments `amount` and recovery cases `revenue_at_risk`/`recovered_amount`, performance indexes on `audit_logs(actor, entity_id, created_at)` and unique partial index on `recovery_attempts(idempotency_key)`.
+  - Rate limiting middleware (`rateLimiter.js`) applied to `/api/recovery/:caseId/execute`, `/api/demo/payment-failure`, and `/api/webhooks/mock-payment`.
+  - Input validation: UUID format validation (`/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/`), enum validation, non-negative amounts, query/body parameter sanitization.
+  - Safe error handling: `errorHandler.js` suppresses stack traces and internal secrets in HTTP responses.
+- **Audit Explorer Page (`/dashboard/audit`)**:
+  - Full Audit Explorer showing timestamp, case ID, action, reason, AI recommendation, guardrail result, execution result, amount, actor, and system version.
+  - Real database records fetched via `GET /api/audit` with search, action filter, guardrail filter, and pagination.
+- **Recovery Analytics Page (`/dashboard/analytics`)**:
+  - Real database-derived business metrics fetched via `GET /api/analytics/recovery`:
+    1. Total Revenue at Risk
+    2. Total Revenue Recovered
+    3. Recovery Rate (%)
+    4. Average Recovery Time (hours)
+    5. Successful Recovery Attempts
+    6. Failed Recovery Attempts
+    7. Escalated Cases Count
+    8. Revenue by Intervention Type
+  - Recharts AreaChart for time-series recovery/risk, PieChart for execution outcomes, and BarChart for revenue by intervention type.
+  - Explicit distinction banner separating business recovery metrics from model evaluation metrics.
+- **Model Evaluation Page (`/dashboard/model-evaluation`)**:
+  - Reads verified Module 4 XGBoost evaluation metrics directly from `model_metadata.json` via `GET /api/model/evaluation`:
+    - Accuracy: **81.72%** (0.8172)
+    - Precision: **83.29%** (0.8329)
+    - Recall: **96.77%** (0.9677)
+    - F1 Score: **89.53%** (0.8953)
+    - ROC-AUC: **76.59%** (0.7659)
+  - Mandatory disclaimer: *"These are XGBoost MODEL EVALUATION METRICS. They are NOT business recovery metrics."*
+  - Detailed metric explanations, Confusion Matrix grid (TN: 65, FP: 282, FN: 47, TP: 1406), and Hyperparameters table.
+- **Test Suite Results**:
+  - Backend test suite (`npm test`): **7/7 test suites passed, 59/59 tests passed** (including `module9_safety_audit_eval.test.js`).
+  - Python AI service test suite (`pytest`): **62/62 tests passed**.
+  - Frontend build (`npm run build`): **Completed cleanly with 0 TypeScript/Vite errors**.
 
 ---
 
@@ -33,6 +72,7 @@ RazorRecover is an AI-powered automated revenue recovery system for failed SaaS 
 - **Dedicated Routing**: Dedicated case detail view at `/dashboard/cases/:caseId`.
 - **Run Recovery Demo Hero Button**: Executes the Module 7 recovery workflow end-to-end (event generation -> XGBoost prediction -> SHAP -> LLM diagnosis -> guardrail validation -> MockPaymentProvider execution -> DB updates), displaying live progress and auto-refreshing the dashboard upon completion.
 
+---
 
 ## Module 7 Details — Payment Simulation & Provider Abstraction
 

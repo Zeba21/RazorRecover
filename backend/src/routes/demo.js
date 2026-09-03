@@ -1,15 +1,18 @@
 const express = require('express');
 const { supabase } = require('../config/supabase');
 const { processEvent } = require('../services/eventEngine');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
+
+const demoRateLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 20, message: 'Demo rate limit exceeded.' });
 
 /**
  * POST /api/demo/payment-failure
  * Generates a realistic PAYMENT_FAILED event, runs it through the Event Engine,
  * and returns details of the processed event, payment, recovery case, and audit log.
  */
-router.post('/payment-failure', async (req, res, next) => {
+router.post('/payment-failure', demoRateLimiter, async (req, res, next) => {
   try {
     // 1. Fetch an existing customer from the database
     const { data: customers, error: customerError } = await supabase
@@ -32,7 +35,7 @@ router.post('/payment-failure', async (req, res, next) => {
       event_type: 'PAYMENT_FAILED',
       customer_id: customerId,
       payment_reference: `pay_demo_${Date.now()}`,
-      amount: 12500.00,
+      amount: (req.body && typeof req.body.amount === 'number' && req.body.amount > 0) ? req.body.amount : 12500.00,
       timestamp: new Date().toISOString(),
       metadata: {
         currency: 'INR',

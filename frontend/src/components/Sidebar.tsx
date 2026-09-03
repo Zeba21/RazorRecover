@@ -1,15 +1,20 @@
 import React from 'react';
-import { LayoutDashboard, CreditCard, Shield } from 'lucide-react';
+import { LayoutDashboard, CreditCard, Shield, FileText, BarChart3, Brain } from 'lucide-react';
+
+export type RouteType = 'dashboard' | 'cases' | 'audit' | 'analytics' | 'model-evaluation' | string;
 
 interface SidebarProps {
-  currentRoute: 'dashboard' | 'cases' | string;
-  onNavigate: (route: 'dashboard' | 'cases') => void;
+  currentRoute: RouteType;
+  onNavigate: (route: RouteType) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentRoute, onNavigate }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'cases', label: 'Recovery Cases', icon: CreditCard }
+    { id: 'cases', label: 'Recovery Cases', icon: CreditCard },
+    { id: 'audit', label: 'Audit Explorer', icon: FileText },
+    { id: 'analytics', label: 'Recovery Analytics', icon: BarChart3 },
+    { id: 'model-evaluation', label: 'Model Evaluation', icon: Brain }
   ];
 
   return (
@@ -26,13 +31,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentRoute, onNavigate }) =>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1.5">
+      <nav className="flex-1 py-6 px-3 space-y-1.5 overflow-y-auto">
         {navItems.map(({ id, label, icon: Icon }) => {
           const isActive = currentRoute === id || (id === 'cases' && currentRoute.startsWith('cases'));
           return (
             <button
               key={id}
-              onClick={() => onNavigate(id as 'dashboard' | 'cases')}
+              onClick={() => onNavigate(id)}
               className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
@@ -48,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentRoute, onNavigate }) =>
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/5 hidden lg:block">
-        <p className="text-[10px] text-surface-200/30 text-center font-mono">Module 8 — Dashboard & UI</p>
+        <p className="text-[10px] text-surface-200/30 text-center font-mono">Module 9 — Safety, Audit & Evaluation</p>
       </div>
     </aside>
   );

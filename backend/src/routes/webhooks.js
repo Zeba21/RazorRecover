@@ -4,8 +4,13 @@
 
 const express = require('express');
 const paymentService = require('../services/paymentService');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
+
+const webhookRateLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 50, message: 'Webhook rate limit exceeded.' });
+
+router.use('/mock-payment', webhookRateLimiter);
 
 /**
  * POST /api/webhooks/mock-payment

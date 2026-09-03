@@ -289,3 +289,134 @@ export async function runRecoveryDemo(onStepUpdate?: (update: DemoStepUpdate) =>
     rawResult: execJson.data
   };
 }
+
+// ----------------- Module 9 Extensions -----------------
+
+export interface AuditItem {
+  id: string;
+  timestamp: string;
+  case_id: string;
+  action: string;
+  reason: string;
+  ai_recommendation: string;
+  guardrail_result: string;
+  execution_result: string;
+  amount: number;
+  actor: string;
+  system_version: string;
+  event_type: string;
+  severity: string;
+}
+
+export interface AuditResponseData {
+  logs: AuditItem[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  };
+}
+
+export interface InterventionBreakdown {
+  intervention: string;
+  label: string;
+  cases_count: number;
+  revenue_recovered: number;
+}
+
+export interface RecoveryAnalyticsData {
+  total_revenue_at_risk: number;
+  total_revenue_recovered: number;
+  recovery_rate: number;
+  average_recovery_time_hours: number;
+  successful_recovery_attempts: number;
+  failed_recovery_attempts: number;
+  escalated_cases_count: number;
+  total_cases_count: number;
+  revenue_by_intervention_type: InterventionBreakdown[];
+  time_series: RevenuePoint[];
+}
+
+export interface ModelMetrics {
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  roc_auc: number;
+}
+
+export interface ModelEvaluationData {
+  model_version: string;
+  training_date?: string;
+  training_samples: number;
+  validation_samples: number;
+  test_samples: number;
+  metrics: ModelMetrics;
+  confusion_matrix: number[][];
+  hyperparameters: Record<string, any>;
+  feature_names: string[];
+  disclaimer: string;
+}
+
+/**
+ * Fetch paginated Audit Logs for Audit Explorer page.
+ */
+export async function fetchAuditLogs(params?: {
+  search?: string;
+  case_id?: string;
+  action?: string;
+  guardrail_result?: string;
+  page?: number;
+  limit?: number;
+}): Promise<AuditResponseData> {
+  const query = new URLSearchParams();
+  if (params?.search) query.append('search', params.search);
+  if (params?.case_id) query.append('case_id', params.case_id);
+  if (params?.action) query.append('action', params.action);
+  if (params?.guardrail_result) query.append('guardrail_result', params.guardrail_result);
+  if (params?.page) query.append('page', String(params.page));
+  if (params?.limit) query.append('limit', String(params.limit));
+
+  const url = `/api/audit${query.toString() ? '?' + query.toString() : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to load audit logs (${res.status})`);
+  }
+  const json = await res.json();
+  if (!json.success) {
+    throw new Error(json.error?.message || 'Audit logs request failed');
+  }
+  return json.data;
+}
+
+/**
+ * Fetch database-derived Recovery Analytics metrics.
+ */
+export async function fetchRecoveryAnalytics(): Promise<RecoveryAnalyticsData> {
+  const res = await fetch('/api/analytics/recovery');
+  if (!res.ok) {
+    throw new Error(`Failed to load recovery analytics (${res.status})`);
+  }
+  const json = await res.json();
+  if (!json.success) {
+    throw new Error(json.error?.message || 'Recovery analytics request failed');
+  }
+  return json.data;
+}
+
+/**
+ * Fetch XGBoost Model Evaluation metrics read from model metadata.
+ */
+export async function fetchModelEvaluation(): Promise<ModelEvaluationData> {
+  const res = await fetch('/api/model/evaluation');
+  if (!res.ok) {
+    throw new Error(`Failed to load model evaluation metrics (${res.status})`);
+  }
+  const json = await res.json();
+  if (!json.success) {
+    throw new Error(json.error?.message || 'Model evaluation request failed');
+  }
+  return json.data;
+}
+

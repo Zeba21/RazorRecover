@@ -1,21 +1,23 @@
 /**
  * Global error handler middleware for Express.
  * Catches all unhandled errors and returns structured JSON responses.
+ * Enforces safety: stack traces and secrets are NEVER returned to clients.
  */
 function errorHandler(err, req, res, _next) {
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+  let message = err.message || 'Internal Server Error';
 
-  console.error(`❌ [${req.method}] ${req.path} — ${statusCode}: ${message}`);
-  if (process.env.NODE_ENV === 'development') {
-    console.error(err.stack);
+  // Sanitize internal database/system errors from leaking credentials or internal details
+  if (message.includes('postgresql://') || message.includes('SUPABASE_') || message.includes('password=')) {
+    message = 'Database operation failed. Details suppressed for security.';
   }
+
+  console.error(`❌ [${req.method}] ${req.path} — ${statusCode}: ${err.message}`);
 
   res.status(statusCode).json({
     success: false,
     error: {
-      message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      message
     }
   });
 }
@@ -33,3 +35,4 @@ function notFoundHandler(req, res) {
 }
 
 module.exports = { errorHandler, notFoundHandler };
+
