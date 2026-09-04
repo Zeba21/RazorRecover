@@ -3,13 +3,13 @@
 .env.*
 !.env.example
 
-# Node
+# Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# Frontend builds
+# Frontend / build output
 dist/
 build/
 
@@ -20,9 +20,12 @@ __pycache__/
 venv/
 env/
 
-# Python ML files
+# Python ML model artifacts
 *.pkl
 *.joblib
+
+# Pytest
+.pytest_cache/
 
 # IDE
 .vscode/
@@ -31,12 +34,12 @@ env/
 # Logs
 *.log
 
+# Coverage
+coverage/
+
 # OS
 .DS_Store
 Thumbs.db
-
-# Coverage
-coverage/
 
 # Temporary files
 *.tmp

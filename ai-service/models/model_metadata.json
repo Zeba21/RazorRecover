@@ -1,6 +1,6 @@
 {
   "model_version": "recovery-xgboost-v1.0",
-  "training_date": "2026-09-03T15:52:27.491749+00:00",
+  "training_date": "2026-09-04T05:40:54.518713+00:00",
   "feature_names": [
     "transaction_amount",
     "customer_payment_history",
